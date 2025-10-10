@@ -2,11 +2,7 @@ version: "3.8"
 
 services:
   webapp:
-    image: python:3.10
+    build: .
     container_name: minha_app
     ports:
       - "30000:8080"
-    volumes:
-      - .:/app
-    working_dir: /app
-    command: sh -c "pip install -r requirements.txt && python app.py"
