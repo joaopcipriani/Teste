@@ -9,4 +9,4 @@ services:
     volumes:
       - .:/app
     working_dir: /app
-    command: python app.py
+    command: sh -c "pip install -r requirements.txt && python app.py"
