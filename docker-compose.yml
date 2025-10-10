@@ -10,3 +10,4 @@ services:
       - .:/app
     working_dir: /app
     command: python app.py
+teste do bozo
