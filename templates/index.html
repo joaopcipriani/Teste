@@ -1,0 +1,26 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>Gerenciador de Arquivos</title>
+  <style>
+    body{font-family:system-ui,Arial;margin:20px}
+    .file-row{display:flex;gap:12px;align-items:center;padding:8px 0;border-bottom:1px solid #eee}
+    button{cursor:pointer}
+  </style>
+</head>
+<body>
+  <h1>Gerenciador de Arquivos</h1>
+
+  <form id="uploadForm">
+    <input type="file" id="fileInput" required />
+    <button type="submit">Enviar</button>
+  </form>
+
+  <h2>Arquivos</h2>
+  <div id="files"></div>
+
+  <script src="/static/app.js"></script>
+</body>
+</html>

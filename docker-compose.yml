@@ -1,8 +1,11 @@
-version: "3.8"
+version: "3.9"
 
 services:
-  webapp:
+  web:
     build: .
-    container_name: minha_app
+    container_name: flask_file_app
     ports:
-      - "30000:8080"
+      - "30000:5000"
+    volumes:
+      - /home/joao/docker_prod/files/upload_iis:/app/uploads
+    restart: unless-stopped
