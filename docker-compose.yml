@@ -7,5 +7,5 @@ services:
     ports:
       - "30000:5000"
     volumes:
-      - /home/joao/docker_prod/files/upload_iis:/app/uploads
+      - /home/joao/docker_prod/files/upload_iis/uploads:/app/uploads
     restart: unless-stopped

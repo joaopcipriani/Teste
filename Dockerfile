@@ -2,14 +2,14 @@ FROM python:3.12-slim
 
 WORKDIR /app
 
+# Dependências básicas para compilar pacotes
 RUN apt-get update && apt-get install -y --no-install-recommends \
-    build-essential gcc python3-dev curl \
+    gcc python3-dev build-essential curl \
  && rm -rf /var/lib/apt/lists/*
 
 COPY requirements.txt .
-
-# Adiciona log pra sabermos o que falha
-RUN echo "Instalando dependências..." && pip install --upgrade pip && pip install --no-cache-dir -r requirements.txt
+RUN pip install --upgrade pip \
+ && pip install --no-cache-dir -r requirements.txt
 
 COPY . .
 
