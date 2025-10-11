@@ -55,3 +55,17 @@ def delete_file(filename):
 
 if __name__ == "__main__":
     app.run(host="0.0.0.0", port=5000)
+#nova linha
+@app.route("/files_json")
+def files_json():
+    files = []
+    for f in os.listdir(UPLOAD_FOLDER):
+        path = os.path.join(UPLOAD_FOLDER, f)
+        stat = os.stat(path)
+        files.append({
+            "name": f,
+            "size": stat.st_size,
+            "ctime": stat.st_ctime,
+            "mtime": stat.st_mtime
+        })
+    return jsonify(files)
