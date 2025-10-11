@@ -5,12 +5,12 @@ from werkzeug.utils import secure_filename
 app = Flask(__name__)
 app.secret_key = "supersecretkey"
 
-# Caminho absoluto dentro do container (docker-compose mapeia /home/joao/... para /app/uploads)
+# Caminho absoluto para uploads dentro do container
 UPLOAD_FOLDER = "/app/uploads"
 os.makedirs(UPLOAD_FOLDER, exist_ok=True)
 app.config["UPLOAD_FOLDER"] = UPLOAD_FOLDER
 
-# Rota principal - mostra a página HTML
+# Página inicial
 @app.route("/")
 def index():
     return render_template("index.html")
@@ -29,7 +29,7 @@ def upload_file():
     filename = secure_filename(file.filename)
     save_path = os.path.join(app.config["UPLOAD_FOLDER"], filename)
 
-    # Evita conflito com nomes duplicados
+    # Evita conflitos de nomes duplicados
     base, ext = os.path.splitext(filename)
     counter = 1
     while os.path.exists(save_path):
@@ -41,24 +41,21 @@ def upload_file():
     flash(f"Arquivo {filename} enviado com sucesso!")
     return redirect(url_for("index"))
 
-# Download de arquivos
+# Download
 @app.route("/download/<filename>")
 def download_file(filename):
     return send_from_directory(app.config["UPLOAD_FOLDER"], filename, as_attachment=True)
 
-# Apagar arquivos
+# Delete
 @app.route("/delete/<filename>", methods=["DELETE", "GET"])
 def delete_file(filename):
     path = os.path.join(app.config["UPLOAD_FOLDER"], filename)
     if os.path.exists(path):
         os.remove(path)
-        flash(f"Arquivo {filename} removido.")
         return jsonify({"ok": True})
-    else:
-        flash(f"Arquivo {filename} não encontrado.")
-        return jsonify({"error": "Arquivo não encontrado"}), 404
+    return jsonify({"error": "Arquivo não encontrado"}), 404
 
-# Endpoint JSON para frontend moderno
+# JSON para frontend moderno
 @app.route("/files_json")
 def files_json():
     try:
