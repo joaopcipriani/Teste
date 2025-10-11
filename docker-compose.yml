@@ -6,6 +6,7 @@ services:
     container_name: flask_file_app
     ports:
       - "30000:5000"
-    volumes:
-      - /home/joao/docker_prod/files/upload_iis/uploads:/app/uploads
+      volumes:
+      - /home/joao/docker_prod/files/upload_iis:/app/uploads
+
     restart: unless-stopped
