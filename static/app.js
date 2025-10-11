@@ -54,8 +54,10 @@ document.getElementById('uploadForm').addEventListener('submit', async e => {
   const input = document.getElementById('fileInput');
   if (!input.files.length) return alert('Escolha um arquivo');
 
+  const file = input.files[0];
   const fd = new FormData();
-  fd.append('file', input.files[0]);
+  fd.append('file', file);
+  fd.append('original_ctime', file.lastModified / 1000);
 
   const res = await fetch('/upload', { method: 'POST', body: fd });
   if (res.ok) {
