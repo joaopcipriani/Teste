@@ -22,69 +22,38 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-# Rota raiz serve o index.html
-@app.get("/")
-async def root():
-    index_path = os.path.join(STATIC_DIR, "index.html")
-    if os.path.exists(index_path):
-        return FileResponse(index_path)
-    return {"error": "index.html não encontrado."}
-
-# Colunas esperadas do log IIS
 columns = ["date", "time", "s-ip", "cs-method", "cs-uri-stem", "sc-status"]
 logs_df = None
 
-# Upload do log IIS
+# Função de parsing de datetime segura
+def parse_datetime_safe(date_str, time_str):
+    try:
+        clean_str = f"{date_str} {time_str}".split()[0]
+        return parser.isoparse(clean_str)
+    except Exception:
+        return pd.NaT
+
 @app.post("/upload")
 async def upload_log(file: UploadFile = File(...)):
     global logs_df
     try:
         content = await file.read()
         content_str = content.decode("utf-8")
-
-        # Ignora linhas de comentário
         lines = [line for line in content_str.splitlines() if not line.startswith("#")]
         data = "\n".join(lines)
 
-        # Lê CSV do log, ignora linhas com colunas erradas
         logs_df = pd.read_csv(
             StringIO(data),
-            delim_whitespace=True,
+            sep=r'\s+',
             header=None,
             names=columns,
             on_bad_lines="skip"
         )
 
-        # Cria coluna datetime para filtro
-
-
-def parse_datetime_safe(date_str, time_str):
-    try:
-        # Junta e remove qualquer texto depois do Z
-        clean_str = f"{date_str} {time_str}".split()[0]  # mantém apenas o timestamp
-        return parser.isoparse(clean_str)
-    except Exception:
-        return pd.NaT
-
-logs_df["datetime"] = logs_df.apply(lambda row: parse_datetime_safe(row["date"], row["time"]), axis=1)
-logs_df = logs_df.dropna(subset=["datetime"])  # remove linhas que não conseguimos parsear
+        logs_df["datetime"] = logs_df.apply(lambda row: parse_datetime_safe(row["date"], row["time"]), axis=1)
+        logs_df = logs_df.dropna(subset=["datetime"])
 
         return {"message": f"Arquivo {file.filename} carregado com sucesso", "rows": len(logs_df)}
     except Exception as e:
         print(f"[ERRO UPLOAD] {e}")
         return {"error": f"Falha ao processar arquivo: {e}"}
-
-# Filtrar logs
-@app.get("/logs")
-def get_logs(start: str = None, end: str = None, code: int = None):
-    global logs_df
-    if logs_df is None:
-        return {"error": "Nenhum log carregado"}
-    df = logs_df.copy()
-    if start:
-        df = df[df["datetime"] >= pd.to_datetime(start)]
-    if end:
-        df = df[df["datetime"] <= pd.to_datetime(end)]
-    if code:
-        df = df[df["sc-status"] == code]
-    return df.to_dict(orient="records")
