@@ -6,15 +6,16 @@ from dateutil import parser
 import pandas as pd
 from io import StringIO
 import os
+import re
 
 app = FastAPI()
 
-# Diretórios
+# Pasta estática
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
 STATIC_DIR = os.path.join(BASE_DIR, "static")
 app.mount("/static", StaticFiles(directory=STATIC_DIR), name="static")
 
-# CORS liberado
+# CORS
 app.add_middleware(
     CORSMiddleware,
     allow_origins=["*"],
@@ -22,92 +23,92 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-# Página inicial
+# Serve index.html
 @app.get("/")
 async def root():
     index_path = os.path.join(STATIC_DIR, "index.html")
     return FileResponse(index_path)
 
-# Variável global para armazenar logs
+# Variável global
 logs_df = None
 
 
+# === Função segura para parse datetime ===
 def parse_datetime_safe(date_str, time_str):
-    """Combina data e hora, ignorando formatos ruins."""
     try:
-        return parser.isoparse(f"{date_str} {time_str}")
+        dt_str = f"{date_str.strip()} {time_str.strip()}"
+        return parser.parse(dt_str)
     except Exception:
         return pd.NaT
 
 
+# === Upload e leitura do log IIS ===
 @app.post("/upload")
 async def upload_log(file: UploadFile = File(...)):
-    """Recebe e processa o arquivo de log IIS."""
     global logs_df
     try:
         content = await file.read()
         content_str = content.decode("utf-8", errors="ignore")
 
-        # Captura o cabeçalho de colunas do IIS
-        lines = content_str.splitlines()
-        field_line = next((line for line in lines if line.startswith("#Fields:")), None)
-        if not field_line:
-            return {"error": "Linha '#Fields:' não encontrada no log IIS."}
+        # Remove comentários e detecta cabeçalho
+        lines = [line.strip() for line in content_str.splitlines() if line.strip() and not line.startswith("#")]
 
-        # Extrai os nomes das colunas
-        columns = field_line.replace("#Fields:", "").strip().split()
+        if not lines:
+            return {"error": "Arquivo de log vazio ou inválido."}
 
-        # Remove comentários antes do conteúdo
-        data_lines = [line for line in lines if not line.startswith("#")]
-        data = "\n".join(data_lines)
+        # Detectar colunas automaticamente (depois de #Fields: ou padrão)
+        match = re.search(r"#Fields:\s*(.*)", content_str)
+        if match:
+            fields = match.group(1).split()
+        else:
+            print("⚠️ Linha '#Fields:' não encontrada — usando colunas padrão.")
+            fields = ["date", "time", "s-ip", "cs-method", "cs-uri-stem", "sc-status"]
 
-        # Cria o DataFrame dinamicamente
+        # Ler log em DataFrame
         logs_df = pd.read_csv(
-            StringIO(data),
+            StringIO("\n".join(lines)),
             sep=r"\s+",
-            header=None,
-            names=columns,
-            on_bad_lines="skip"
+            names=fields,
+            engine="python",
+            on_bad_lines="skip",
         )
 
-        # Cria coluna datetime (caso exista date/time)
+        # Garantir que existam colunas de data e hora
         if "date" in logs_df.columns and "time" in logs_df.columns:
             logs_df["datetime"] = logs_df.apply(
-                lambda row: parse_datetime_safe(row["date"], row["time"]),
-                axis=1
+                lambda r: parse_datetime_safe(r["date"], r["time"]), axis=1
             )
-            logs_df = logs_df.dropna(subset=["datetime"])
+        else:
+            logs_df["datetime"] = pd.NaT
 
-        return {
-            "message": f"Arquivo {file.filename} carregado com sucesso.",
-            "rows": len(logs_df),
-            "columns": list(logs_df.columns)
-        }
+        logs_df = logs_df.dropna(subset=["datetime"])
+
+        return {"message": f"Arquivo {file.filename} processado com sucesso!", "rows": len(logs_df)}
 
     except Exception as e:
         print(f"[ERRO UPLOAD] {e}")
         return {"error": f"Falha ao processar arquivo: {e}"}
 
 
+# === Endpoint de consulta de logs ===
 @app.get("/logs")
 def get_logs(start: str = None, end: str = None, code: int = None):
-    """Retorna logs filtrados."""
     global logs_df
-    if logs_df is None:
-        return {"error": "Nenhum log carregado"}
+    if logs_df is None or logs_df.empty:
+        return {"error": "Nenhum log carregado."}
 
     df = logs_df.copy()
 
-    if "datetime" in df.columns:
-        if start:
-            df = df[df["datetime"] >= pd.to_datetime(start, errors="coerce")]
-        if end:
-            df = df[df["datetime"] <= pd.to_datetime(end, errors="coerce")]
+    if start:
+        df = df[df["datetime"] >= pd.to_datetime(start)]
+    if end:
+        df = df[df["datetime"] <= pd.to_datetime(end)]
+    if code:
+        if "sc-status" in df.columns:
+            df = df[df["sc-status"] == code]
 
-    if code and "sc-status" in df.columns:
-        df = df[df["sc-status"] == code]
-
-    # Remove valores NaN para não quebrar o JSON
+    # Evita erro de NaN -> JSON
+    df = df.replace({pd.NA: None})
     df = df.fillna("")
 
     return df.to_dict(orient="records")
