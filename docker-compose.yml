@@ -1,11 +1,21 @@
 version: "3.9"
-
 services:
-  web:
-    build: .
-    container_name: flask_file_app
+  backend:
+    build: ./backend
+    container_name: iis-analyzer-backend
     ports:
-      - "30000:5000"
+      - "8000:8000"
     volumes:
-      - /home/joao/docker_prod/files/upload_iis/uploads:/app/uploads
-    restart: unless-stopped
+      - ./backend/data/uploads:/app/data/uploads
+      - ./backend/data/analyses:/app/data/analyses
+
+  frontend:
+    build: ./frontend
+    container_name: iis-analyzer-frontend
+    command: ["npm", "run", "dev", "--", "--host"]
+    ports:
+      - "30000:3000"
+    volumes:
+      - ./frontend:/app
+    depends_on:
+      - backend
