@@ -2,6 +2,7 @@ from fastapi import FastAPI, UploadFile, File
 from fastapi.responses import FileResponse
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.staticfiles import StaticFiles
+from dateutil import parser
 import pandas as pd
 from io import StringIO
 import os
@@ -55,7 +56,7 @@ async def upload_log(file: UploadFile = File(...)):
         )
 
         # Cria coluna datetime para filtro
-from dateutil import parser
+
 
 def parse_datetime_safe(date_str, time_str):
     try:
