@@ -1,21 +1,35 @@
 version: "3.9"
+
 services:
   backend:
-    build: ./backend
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
     container_name: iis-analyzer-backend
     ports:
       - "28000:8000"
     volumes:
       - ./backend/data/uploads:/app/data/uploads
       - ./backend/data/analyses:/app/data/analyses
+    restart: unless-stopped
 
   frontend:
-    build: ./frontend
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
     container_name: iis-analyzer-frontend
-    command: ["npm", "run", "dev", "--", "--host"]
+    command: ["npm", "run", "dev", "--", "--host", "0.0.0.0"]
     ports:
-      - "30000:3000"
+      - "30001:3000"   # alterei para 30001 para evitar conflito
     volumes:
       - ./frontend:/app
+      - /app/node_modules
     depends_on:
       - backend
+    environment:
+      - VITE_API_URL=http://localhost:28000
+    restart: unless-stopped
+
+networks:
+  default:
+    driver: bridge
