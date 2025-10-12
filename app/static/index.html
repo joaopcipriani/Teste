@@ -16,10 +16,9 @@
 <button onclick="uploadFile()">Enviar</button>
 
 <h2>Filtros</h2>
-<input type="datetime-local" id="start">
-<input type="datetime-local" id="end">
+<input type="datetime-local" id="start" placeholder="Início">
+<input type="datetime-local" id="end" placeholder="Fim">
 <input type="number" id="code" placeholder="HTTP code">
-<button onclick="loadLogs()">Filtrar</button>
 
 <table id="logTable">
   <thead>
@@ -29,6 +28,9 @@
 </table>
 
 <script>
+let timeoutId = null;
+
+// Faz o upload do arquivo
 async function uploadFile() {
   const fileInput = document.getElementById("logFile");
   if (!fileInput.files.length) return alert("Escolha um arquivo");
@@ -38,8 +40,10 @@ async function uploadFile() {
   const res = await fetch("/upload", { method: "POST", body: formData });
   const data = await res.json();
   alert(data.message);
+  loadLogs(); // carrega automaticamente após upload
 }
 
+// Função para carregar os logs
 async function loadLogs() {
   const start = document.getElementById("start").value;
   const end = document.getElementById("end").value;
@@ -58,6 +62,17 @@ async function loadLogs() {
     tr.innerHTML = `<td>${row.datetime}</td><td>${row["cs-method"]}</td><td>${row["cs-uri-stem"]}</td><td>${row["sc-status"]}</td>`;
     tbody.appendChild(tr);
   });
+}
+
+// Adiciona listeners para atualização automática ao digitar/mudar filtros
+document.getElementById("start").addEventListener("input", () => debounceLoad());
+document.getElementById("end").addEventListener("input", () => debounceLoad());
+document.getElementById("code").addEventListener("input", () => debounceLoad());
+
+// Debounce para não fazer requisições a cada tecla instantaneamente
+function debounceLoad() {
+  if(timeoutId) clearTimeout(timeoutId);
+  timeoutId = setTimeout(loadLogs, 500); // espera 500ms depois da última tecla
 }
 </script>
 </body>
