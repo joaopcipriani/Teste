@@ -14,7 +14,7 @@ services:
     container_name: iis-analyzer-frontend
     command: ["npm", "run", "dev", "--", "--host"]
     ports:
-      - "30000:3000"
+      - "3000:3000"
     volumes:
       - ./frontend:/app
     depends_on:
