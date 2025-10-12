@@ -2,10 +2,190 @@
 <html lang="pt-BR">
 <head>
   <meta charset="UTF-8">
-  <title>Teste IIS Log Analyzer</title>
+  <title>IIS Log Analyzer</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      margin: 40px;
+      background: #f5f6fa;
+      color: #2f3640;
+    }
+
+    h1 {
+      text-align: center;
+      color: #273c75;
+    }
+
+    .upload-box {
+      text-align: center;
+      margin-bottom: 20px;
+    }
+
+    input[type="file"] {
+      margin-top: 10px;
+    }
+
+    .filters {
+      display: flex;
+      gap: 10px;
+      justify-content: center;
+      margin-bottom: 20px;
+      flex-wrap: wrap;
+    }
+
+    input, button {
+      padding: 8px 12px;
+      border-radius: 6px;
+      border: 1px solid #ccc;
+      font-size: 14px;
+    }
+
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      background: white;
+      box-shadow: 0 2px 6px rgba(0,0,0,0.1);
+    }
+
+    th, td {
+      padding: 10px;
+      border-bottom: 1px solid #ddd;
+      text-align: center;
+    }
+
+    th {
+      background: #40739e;
+      color: white;
+    }
+
+    tr:hover {
+      background: #f1f2f6;
+    }
+
+    #status {
+      text-align: center;
+      margin-bottom: 15px;
+      color: #44bd32;
+    }
+
+    .hidden {
+      display: none;
+    }
+  </style>
 </head>
 <body>
-  <h1>✅ Frontend carregado com sucesso!</h1>
-  <p>Se você está vendo isso, o FastAPI achou o index.html corretamente.</p>
-</body>
-</html>
+  <h1>IIS Log Analyzer</h1>
+
+  <div class="upload-box">
+    <input type="file" id="fileInput" accept=".log,.txt" />
+    <button onclick="uploadFile()">Enviar Log</button>
+  </div>
+
+  <div id="status" class="hidden"></div>
+
+  <div class="filters">
+    <input type="datetime-local" id="startDate" placeholder="Início">
+    <input type="datetime-local" id="endDate" placeholder="Fim">
+    <input type="text" id="codeFilter" placeholder="Código HTTP">
+  </div>
+
+  <table id="logTable">
+    <thead>
+      <tr>
+        <th>Data</th>
+        <th>Hora</th>
+        <th>Método</th>
+        <th>URI</th>
+        <th>Status</th>
+      </tr>
+    </thead>
+    <tbody></tbody>
+  </table>
+
+  <script>
+    let allLogs = [];
+
+    // Upload do arquivo
+    async function uploadFile() {
+      const fileInput = document.getElementById("fileInput");
+      if (!fileInput.files.length) {
+        alert("Selecione um arquivo de log primeiro!");
+        return;
+      }
+
+      const formData = new FormData();
+      formData.append("file", fileInput.files[0]);
+
+      const statusDiv = document.getElementById("status");
+      statusDiv.textContent = "⏳ Enviando arquivo...";
+      statusDiv.classList.remove("hidden");
+
+      const response = await fetch("/upload", {
+        method: "POST",
+        body: formData
+      });
+
+      const result = await response.json();
+      if (result.error) {
+        statusDiv.textContent = "❌ Erro ao processar log.";
+      } else {
+        statusDiv.textContent = `✅ ${result.message} (${result.rows} linhas)`;
+        await fetchLogs();
+      }
+    }
+
+    // Busca logs do backend
+    async function fetchLogs() {
+      const start = document.getElementById("startDate").value;
+      const end = document.getElementById("endDate").value;
+      const code = document.getElementById("codeFilter").value;
+
+      let url = "/logs?";
+      if (start) url += `start=${encodeURIComponent(start)}&`;
+      if (end) url += `end=${encodeURIComponent(end)}&`;
+      if (code) url += `code=${encodeURIComponent(code)}`;
+
+      const response = await fetch(url);
+      const data = await response.json();
+      if (!data.error) {
+        allLogs = data;
+        renderTable();
+      }
+    }
+
+    // Renderiza tabela
+    function renderTable() {
+      const tbody = document.querySelector("#logTable tbody");
+      tbody.innerHTML = "";
+
+      if (!allLogs.length) {
+        const tr = document.createElement("tr");
+        const td = document.createElement("td");
+        td.colSpan = 5;
+        td.textContent = "Nenhum dado encontrado.";
+        tr.appendChild(td);
+        tbody.appendChild(tr);
+        return;
+      }
+
+      allLogs.forEach(log => {
+        const tr = document.createElement("tr");
+        tr.innerHTML = `
+          <td>${log.date}</td>
+          <td>${log.time}</td>
+          <td>${log["cs-method"]}</td>
+          <td>${log["cs-uri-stem"]}</td>
+          <td>${log["sc-status"]}</td>
+        `;
+        tbody.appendChild(tr);
+      });
+    }
+
+    // Filtro automático enquanto digita
+    document.getElementById("codeFilter").addEventListener("input", debounce(fetchLogs, 400));
+    document.getElementById("startDate").addEventListener("change", fetchLogs);
+    document.getElementById("endDate").addEventListener("change", fetchLogs);
+
+    function debounce(fn, delay) {
+      let timeout;
+      return function(...args) {
