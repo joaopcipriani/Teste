@@ -1,6 +1,7 @@
 from fastapi import FastAPI, UploadFile, File
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.staticfiles import StaticFiles
+from fastapi.responses import FileResponse
 import pandas as pd
 from datetime import datetime
 from io import StringIO
@@ -8,12 +9,26 @@ import os
 
 app = FastAPI()
 
-# Configura pasta estática corretamente
-current_dir = os.path.dirname(os.path.abspath(__file__))
-static_dir = os.path.join(current_dir, "static")
-app.mount("/", StaticFiles(directory=static_dir, html=True), name="static")
+# Caminho absoluto da pasta static
+BASE_DIR = os.path.dirname(os.path.abspath(__file__))
+STATIC_DIR = os.path.join(BASE_DIR, "static")
 
-# Permite requests do frontend
+# Se a pasta não existir, loga um aviso (pra debug)
+if not os.path.exists(STATIC_DIR):
+    print(f"[AVISO] Pasta static não encontrada em: {STATIC_DIR}")
+
+# Monta rota para servir arquivos estáticos
+app.mount("/static", StaticFiles(directory=STATIC_DIR), name="static")
+
+# Retorna o index.html na raiz "/"
+@app.get("/")
+async def root():
+    index_path = os.path.join(STATIC_DIR, "index.html")
+    if os.path.exists(index_path):
+        return FileResponse(index_path)
+    return {"error": "index.html não encontrado."}
+
+# Middleware CORS
 app.add_middleware(
     CORSMiddleware,
     allow_origins=["*"],
