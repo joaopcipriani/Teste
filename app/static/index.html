@@ -50,14 +50,12 @@ tr:hover { background: #f1f2f6; }
 <script>
 let allLogs = [];
 
-// Função de upload
 async function uploadFile() {
   const fileInput = document.getElementById("fileInput");
   if (!fileInput.files.length) {
     alert("Selecione um arquivo de log primeiro!");
     return;
   }
-
   const formData = new FormData();
   formData.append("file", fileInput.files[0]);
 
@@ -69,7 +67,7 @@ async function uploadFile() {
     const response = await fetch("/upload", { method: "POST", body: formData });
     const result = await response.json();
     if (result.error) {
-      statusDiv.textContent = "❌ Erro ao processar log.";
+      statusDiv.textContent = "❌ " + result.error;
     } else {
       statusDiv.textContent = `✅ ${result.message} (${result.rows} linhas)`;
       await fetchLogs();
@@ -80,7 +78,6 @@ async function uploadFile() {
   }
 }
 
-// Função para buscar logs filtrados
 async function fetchLogs() {
   const start = document.getElementById("startDate").value;
   const end = document.getElementById("endDate").value;
@@ -99,7 +96,6 @@ async function fetchLogs() {
   }
 }
 
-// Renderiza a tabela
 function renderTable() {
   const tbody = document.querySelector("#logTable tbody");
   tbody.innerHTML = "";
@@ -127,10 +123,7 @@ function renderTable() {
   });
 }
 
-// Ativa botão de enviar
 document.getElementById("sendBtn").addEventListener("click", uploadFile);
-
-// Filtro automático
 document.getElementById("codeFilter").addEventListener("input", debounce(fetchLogs, 400));
 document.getElementById("startDate").addEventListener("change", fetchLogs);
 document.getElementById("endDate").addEventListener("change", fetchLogs);
