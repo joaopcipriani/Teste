@@ -4,11 +4,14 @@ from fastapi.staticfiles import StaticFiles
 import pandas as pd
 from datetime import datetime
 from io import StringIO
+import os
 
 app = FastAPI()
 
-# Habilita frontend estático
-app.mount("/", StaticFiles(directory="static", html=True), name="static")
+# Configura pasta estática corretamente
+current_dir = os.path.dirname(os.path.abspath(__file__))
+static_dir = os.path.join(current_dir, "static")
+app.mount("/", StaticFiles(directory=static_dir, html=True), name="static")
 
 # Permite requests do frontend
 app.add_middleware(

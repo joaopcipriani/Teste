@@ -30,7 +30,6 @@
 <script>
 let timeoutId = null;
 
-// Faz o upload do arquivo
 async function uploadFile() {
   const fileInput = document.getElementById("logFile");
   if (!fileInput.files.length) return alert("Escolha um arquivo");
@@ -43,7 +42,6 @@ async function uploadFile() {
   loadLogs(); // carrega automaticamente após upload
 }
 
-// Função para carregar os logs
 async function loadLogs() {
   const start = document.getElementById("start").value;
   const end = document.getElementById("end").value;
@@ -64,15 +62,14 @@ async function loadLogs() {
   });
 }
 
-// Adiciona listeners para atualização automática ao digitar/mudar filtros
-document.getElementById("start").addEventListener("input", () => debounceLoad());
-document.getElementById("end").addEventListener("input", () => debounceLoad());
-document.getElementById("code").addEventListener("input", () => debounceLoad());
+// Atualização automática ao digitar
+document.getElementById("start").addEventListener("input", debounceLoad);
+document.getElementById("end").addEventListener("input", debounceLoad);
+document.getElementById("code").addEventListener("input", debounceLoad);
 
-// Debounce para não fazer requisições a cada tecla instantaneamente
 function debounceLoad() {
   if(timeoutId) clearTimeout(timeoutId);
-  timeoutId = setTimeout(loadLogs, 500); // espera 500ms depois da última tecla
+  timeoutId = setTimeout(loadLogs, 500); // 500ms debounce
 }
 </script>
 </body>
