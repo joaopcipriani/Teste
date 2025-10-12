@@ -21,9 +21,9 @@ services:
     command: ["npm", "run", "dev", "--", "--host", "0.0.0.0"]
     ports:
       - "30000:3000"
-    volumes:
-      - ./frontend:/app
-      - /app/node_modules
+    #volumes:
+    #  - ./frontend:/app
+    #  - /app/node_modules
     depends_on:
       - backend
     environment:
