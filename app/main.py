@@ -55,7 +55,19 @@ async def upload_log(file: UploadFile = File(...)):
         )
 
         # Cria coluna datetime para filtro
-        logs_df["datetime"] = pd.to_datetime(logs_df["date"] + " " + logs_df["time"])
+from dateutil import parser
+
+def parse_datetime_safe(date_str, time_str):
+    try:
+        # Junta e remove qualquer texto depois do Z
+        clean_str = f"{date_str} {time_str}".split()[0]  # mantém apenas o timestamp
+        return parser.isoparse(clean_str)
+    except Exception:
+        return pd.NaT
+
+logs_df["datetime"] = logs_df.apply(lambda row: parse_datetime_safe(row["date"], row["time"]), axis=1)
+logs_df = logs_df.dropna(subset=["datetime"])  # remove linhas que não conseguimos parsear
+
         return {"message": f"Arquivo {file.filename} carregado com sucesso", "rows": len(logs_df)}
     except Exception as e:
         print(f"[ERRO UPLOAD] {e}")
