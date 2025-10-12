@@ -1,0 +1,64 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<title>Analyser IIS Logs</title>
+<style>
+  body { font-family: Arial, sans-serif; padding: 20px; }
+  table { border-collapse: collapse; width: 100%; margin-top: 20px; }
+  th, td { border: 1px solid #ccc; padding: 8px; text-align: left; }
+  th { background-color: #f4f4f4; }
+</style>
+</head>
+<body>
+<h2>Upload do log IIS</h2>
+<input type="file" id="logFile">
+<button onclick="uploadFile()">Enviar</button>
+
+<h2>Filtros</h2>
+<input type="datetime-local" id="start">
+<input type="datetime-local" id="end">
+<input type="number" id="code" placeholder="HTTP code">
+<button onclick="loadLogs()">Filtrar</button>
+
+<table id="logTable">
+  <thead>
+    <tr><th>Datetime</th><th>Method</th><th>URI</th><th>Status</th></tr>
+  </thead>
+  <tbody></tbody>
+</table>
+
+<script>
+async function uploadFile() {
+  const fileInput = document.getElementById("logFile");
+  if (!fileInput.files.length) return alert("Escolha um arquivo");
+  const formData = new FormData();
+  formData.append("file", fileInput.files[0]);
+
+  const res = await fetch("/upload", { method: "POST", body: formData });
+  const data = await res.json();
+  alert(data.message);
+}
+
+async function loadLogs() {
+  const start = document.getElementById("start").value;
+  const end = document.getElementById("end").value;
+  const code = document.getElementById("code").value;
+  const params = new URLSearchParams();
+  if(start) params.append("start", start);
+  if(end) params.append("end", end);
+  if(code) params.append("code", code);
+
+  const res = await fetch(`/logs?${params.toString()}`);
+  const data = await res.json();
+  const tbody = document.querySelector("#logTable tbody");
+  tbody.innerHTML = "";
+  data.forEach(row => {
+    const tr = document.createElement("tr");
+    tr.innerHTML = `<td>${row.datetime}</td><td>${row["cs-method"]}</td><td>${row["cs-uri-stem"]}</td><td>${row["sc-status"]}</td>`;
+    tbody.appendChild(tr);
+  });
+}
+</script>
+</body>
+</html>
