@@ -1,9 +1,0 @@
-version: '3.8'
-
-services:
-  iis-log-analyzer:
-    build: .
-    container_name: iis-log-analyzer
-    ports:
-      - "30000:8000"
-    restart: unless-stopped
