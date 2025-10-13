@@ -12,15 +12,15 @@ def analyze_dump(dmp_bytes):
     stacks = []
 
     # Corrigido: dump.threads é um objeto, precisamos usar .threads
-    for thread in dump.threads.threads:
-        thread_info = {
-            "thread_id": thread.thread_id,
-            "stack_start": hex(thread.stack.start_virtual_address) if thread.stack else None,
-            "stack_end": hex(thread.stack.end_virtual_address) if thread.stack else None,
-            "stack_memory_size": len(thread.stack.memory) if thread.stack and thread.stack.memory else 0
-        }
-        stacks.append(thread_info)
 
+    for thread in dump.threads.threads:
+    thread_info = {
+        "thread_id": thread.ThreadId,  # <--- propriedade correta
+        "stack_start": hex(thread.Stack.StartOfMemoryRange) if thread.Stack else None,
+        "stack_end": hex(thread.Stack.StartOfMemoryRange + thread.Stack.Memory.DataSize) if thread.Stack else None,
+        "stack_memory_size": thread.Stack.Memory.DataSize if thread.Stack and thread.Stack.Memory else 0
+    }
+    stacks.append(thread_info)
     return {
         "thread_count": len(dump.threads.threads),
         "threads": stacks
