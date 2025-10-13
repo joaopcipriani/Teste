@@ -2,16 +2,15 @@ version: '3.8'
 
 services:
   backend:
-  image: python:3.11-slim
-  container_name: stack-translator_backend
-  ports:
-    - "8000:8000"
-  volumes:
-    - ./backend/app:/app
-  working_dir: /app
-  command: python main.py
-  restart: unless-stopped
-
+    image: python:3.11-slim
+    container_name: stack-translator_backend
+    ports:
+      - "8000:8000"
+    volumes:
+      - ./backend/app:/app
+    working_dir: /app
+    command: python main.py   # ajuste para o arquivo que inicia seu backend
+    restart: unless-stopped
 
   frontend:
     build: ./frontend
