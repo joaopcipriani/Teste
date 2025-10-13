@@ -7,7 +7,7 @@ function App() {
   const [loading, setLoading] = useState(false)
 
   // API_URL usa variável de ambiente VITE_API_URL ou fallback para localhost
-  const API_URL = import.meta.env.VITE_API_URL || "http://localhost:5000"
+  const API_URL = import.meta.env.VITE_API_URL || "http://192.168.31.134:5000"
 
   const handleUpload = async () => {
     if (!file) return alert("Selecione um arquivo .dmp")
