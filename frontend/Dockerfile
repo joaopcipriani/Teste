@@ -1,21 +1,20 @@
-# Use Node LTS oficial (alpine leve)
 FROM node:20
 
 WORKDIR /app
 
-# Copia package.json e package-lock.json antes do restante para cache eficiente
+# Copiar package.json e package-lock.json primeiro
 COPY package*.json ./
 
 # Instala dependências
 RUN npm install
 
-# Copia todos os arquivos (src, vite.config.js, index.html)
+# Copiar o restante do código (src, vite.config.js, index.html)
 COPY . .
 
-# Builda a aplicação
+# Build da aplicação
 RUN npm run build
 
-# Serve build estático usando serve
+# Serve build estático
 RUN npm install -g serve
 
 EXPOSE 30000
