@@ -2,3 +2,4 @@ fastapi
 uvicorn
 minidump
 pefile
+python-multipart
