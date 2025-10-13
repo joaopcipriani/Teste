@@ -1,28 +1,16 @@
-version: '3.8'
+version: "3.9"
 
 services:
   backend:
     build:
       context: ./backend
-      dockerfile: Dockerfile
-    container_name: dump-backend
     ports:
       - "5000:5000"
-    networks:
-      - dumpnet
 
   frontend:
     build:
       context: ./frontend
-      dockerfile: Dockerfile
-    container_name: dump-frontend
     ports:
-      - "30000:3000"
+      - "30000:30000"
     depends_on:
       - backend
-    networks:
-      - dumpnet
-
-networks:
-  dumpnet:
-    driver: bridge
