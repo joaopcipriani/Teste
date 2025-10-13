@@ -1,7 +1,7 @@
 from fastapi import FastAPI, UploadFile, File
 from analyzer import analyze_dump
 
-app = FastAPI()
+app = FastAPI(title="Dump Analyzer")
 
 @app.post("/upload")
 async def upload_dump(file: UploadFile = File(...)):
