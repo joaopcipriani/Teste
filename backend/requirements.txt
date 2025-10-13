@@ -1,2 +1,2 @@
 flask
-pywin32
+pefile

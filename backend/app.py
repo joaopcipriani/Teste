@@ -1,6 +1,5 @@
 from flask import Flask, request, jsonify
-from sym_translate import translate_address
-import os
+from sym_translate import translate_address_dummy
 
 app = Flask(__name__)
 
@@ -8,10 +7,7 @@ app = Flask(__name__)
 def translate():
     data = request.json
     stack = data.get("stack", [])
-    pid = os.getpid()  # só exemplo, ideal seria permitir escolher PID
-    result = []
-    for addr in stack:
-        result.append(translate_address(pid, addr))
+    result = translate_address_dummy(stack)
     return jsonify(result)
 
 if __name__ == "__main__":

@@ -17,7 +17,7 @@ function App() {
 
   return (
     <div style={{ padding: 20 }}>
-      <h1>Symbolic Translator</h1>
+      <h1>Symbolic Translator (Linux-friendly)</h1>
       <textarea
         rows={10}
         cols={50}
