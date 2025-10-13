@@ -1,9 +1,8 @@
 from minidump.minidumpfile import MinidumpFile
 import os
-import pefile
 
 def analyze_dump(dmp_bytes):
-    os.makedirs("uploads", exist_ok=True)  # <--- cria pasta se não existir
+    os.makedirs("uploads", exist_ok=True)
     path = "uploads/temp.dmp"
 
     with open(path, "wb") as f:
@@ -12,11 +11,17 @@ def analyze_dump(dmp_bytes):
     dump = MinidumpFile.parse(path)
     stacks = []
 
-    for thread in dump.threads:
-        stack_info = {
+    # Corrigido: dump.threads é um objeto, precisamos usar .threads
+    for thread in dump.threads.threads:
+        thread_info = {
             "thread_id": thread.thread_id,
-            "stack": [hex(frame.instruction) for frame in (thread.stack or [])]
+            "stack_start": hex(thread.stack.start_virtual_address) if thread.stack else None,
+            "stack_end": hex(thread.stack.end_virtual_address) if thread.stack else None,
+            "stack_memory_size": len(thread.stack.memory) if thread.stack and thread.stack.memory else 0
         }
-        stacks.append(stack_info)
+        stacks.append(thread_info)
 
-    return stacks
+    return {
+        "thread_count": len(dump.threads.threads),
+        "threads": stacks
+    }
