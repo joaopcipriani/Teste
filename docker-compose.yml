@@ -10,7 +10,7 @@ services:
   frontend:
     build:
       context: ./frontend
-      ports:
+    ports:
       - "30000:30000"
-      depends_on:
+    depends_on:
       - backend
