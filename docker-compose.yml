@@ -1,14 +1,20 @@
 version: "3.9"
 
 services:
-  dump-analyzer:
-    build: .
-    container_name: dump-analyzer
+  backend:
+    build:
+      context: ./backend
+    container_name: dump-backend
     ports:
-      - "30000:8000"
+      - "5000:5000"
     volumes:
-      - ./app:/app       # Código fonte
-      - ./symbols:/symbols  # Symbols cache (opcional)
-      - ./uploads:/uploads  # Local temporário para dumps
-    environment:
-      - PYTHONUNBUFFERED=1
+      - ./backend/uploads:/app/uploads
+
+  frontend:
+    build:
+      context: ./frontend
+    container_name: dump-frontend
+    ports:
+      - "30000:30000"
+    depends_on:
+      - backend
