@@ -1,0 +1,14 @@
+version: "3.9"
+
+services:
+  dump-analyzer:
+    build: .
+    container_name: dump-analyzer
+    ports:
+      - "30000:8000"
+    volumes:
+      - ./app:/app       # Código fonte
+      - ./symbols:/symbols  # Symbols cache (opcional)
+      - ./uploads:/uploads  # Local temporário para dumps
+    environment:
+      - PYTHONUNBUFFERED=1
