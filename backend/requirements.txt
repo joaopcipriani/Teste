@@ -1,0 +1,7 @@
+fastapi==0.95.2
+uvicorn[standard]==0.22.0
+python-multipart==0.0.6
+pydantic==1.10.11
+requests==2.31.0
+# Observação: a biblioteca 'symbolic' do Sentry exige Rust toolchain para build.
+# Se quieser integrar a symbolication real, instale 'symbolic' ou configure um serviço externo.
