@@ -1,18 +1,47 @@
-version: '3.9'
-services:
-  backend:
-    build:
-      context: .
-      dockerfile: Dockerfile.backend
-    ports:
-      - "5000:5000"
+version: '3.8'
 
-  frontend:
-    build:
-      context: .
-      dockerfile: Dockerfile.frontend
+services:
+  elasticsearch:
+    image: docker.elastic.co/elasticsearch/elasticsearch:7.17.0
+    environment:
+      - discovery.type=single-node
+      - xpack.security.enabled=false
     ports:
-      - "30000:30000"
+      - "9200:9200"
+    networks:
+      - superdump-net
+
+  postgres:
+    image: postgres:13
+    environment:
+      POSTGRES_USER: superdump
+      POSTGRES_PASSWORD: superdump
+      POSTGRES_DB: superdump
+    ports:
+      - "5432:5432"
+    networks:
+      - superdump-net
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+
+  superdump:
+    image: 4softde/superdump:latest
+    environment:
+      - ConnectionStrings__SuperDump=Host=postgres;Database=superdump;Username=superdump;Password=superdump
+      - Elasticsearch__Url=http://elasticsearch:9200
     depends_on:
-      - backend
-#
+      - postgres
+      - elasticsearch
+    ports:
+      - "30000:80" # SuperDump API e Web UI
+    networks:
+      - superdump-net
+    volumes:
+      - dumps:/dumps
+
+volumes:
+  pgdata:
+  dumps:
+
+networks:
+  superdump-net:
