@@ -1,19 +1,19 @@
 from minidump.minidumpfile import MinidumpFile
-import os
+import pefile
 
 def analyze_dump(dmp_bytes):
-    os.makedirs("uploads", exist_ok=True)
-    dump_path = "uploads/temp.dmp"
-
-    with open(dump_path, "wb") as f:
+    path = "uploads/temp.dmp"
+    with open(path, "wb") as f:
         f.write(dmp_bytes)
 
-    dump = MinidumpFile.parse(dump_path)
-    results = []
+    dump = MinidumpFile.parse(path)
+    stacks = []
+
     for thread in dump.threads:
-        stack = [hex(frame.instruction) for frame in thread.stack]
-        results.append({
+        stack_info = {
             "thread_id": thread.thread_id,
-            "stack": stack
-        })
-    return results
+            "stack": [hex(frame.instruction) for frame in thread.stack or []]
+        }
+        stacks.append(stack_info)
+
+    return stacks
