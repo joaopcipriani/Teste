@@ -5,7 +5,7 @@ RUN apt-get update && \
     apt-get install -y python3 python3-pip git build-essential libffi-dev libssl-dev && \
     rm -rf /var/lib/apt/lists/*
 
-WORKDIR /.
+WORKDIR /
 
 # Copia requirements antes do app para aproveitar cache
 COPY requirements.txt ./requirements.txt
