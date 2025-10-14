@@ -22,7 +22,8 @@ services:
     image: powerdns/pdns-auth-49:latest  # Use a newer version
     container_name: powerdns
     restart: unless-stopped
-    command:
+    command: >
+      pdns_server
       --api=yes
       --api-key=pdns-api-key
       --webserver=yes
@@ -50,7 +51,7 @@ services:
     ports:
       - "9191:80"
     environment:
-      SQLALCHEMY_DATABASE_URI: mysql://pda:pdaadmin@db/powerdns
+      SQLALCHEMY_DATABASE_URI: mysql+pymysql://pda:pdaadmin@db/powerdns
       SECRET_KEY: super-secret-key-change-me!  # Change in production!
       PDNS_API_URL: http://pdns:8081
       PDNS_API_KEY: pdns-api-key
