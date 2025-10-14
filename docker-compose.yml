@@ -1,16 +1,12 @@
 version: "3.9"
 
 services:
-  backend:
-    build:
-      context: ./backend
+  analyzer:
+    build: .
+    container_name: dump_analyzer
     ports:
-      - "5000:5000"
-
-  frontend:
-    build:
-      context: ./frontend
-    ports:
-      - "30000:30000"
-    depends_on:
-      - backend
+      - "30000:5000"
+    volumes:
+      - ./app/uploads:/tmp/uploads
+    environment:
+      - FLASK_ENV=development
