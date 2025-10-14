@@ -23,16 +23,16 @@ services:
     container_name: powerdns
     restart: unless-stopped
     command:
-      - "--api=yes"
-      - "--api-key=pdns-api-key"
-      - "--webserver=yes"
-      - "--webserver-address=0.0.0.0"
-      - "--webserver-port=8081"
-      - "--launch=gmysql"
-      - "--gmysql-host=db"
-      - "--gmysql-user=pdns"
-      - "--gmysql-password=pdnspass"
-      - "--gmysql-dbname=powerdns"
+      --api=yes
+      --api-key=pdns-api-key
+      --webserver=yes
+      --webserver-address=0.0.0.0
+      --webserver-port=8081
+      --launch=gmysql
+      --gmysql-host=db
+      --gmysql-user=pdns
+      --gmysql-password=pdnspass
+      --gmysql-dbname=powerdns
     ports:
       - "15053:53/tcp"
       - "15053:53/udp"
