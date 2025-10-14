@@ -6,20 +6,23 @@ services:
     container_name: powerdns-db
     restart: unless-stopped
     environment:
-      MYSQL_ROOT_PASSWORD: rootpassword  # Change in production!
+      MYSQL_ROOT_PASSWORD: rootpassword  # Alterar em produção!
       MYSQL_DATABASE: powerdns
       MYSQL_USER: pdns
-      MYSQL_PASSWORD: pdnspass  # Change in production!
+      MYSQL_PASSWORD: pdnspass        # Alterar em produção!
     volumes:
       - db_data:/var/lib/mysql
-      - ./init-db.sql:/docker-entrypoint-initdb.d/init-db.sql  # Updated init script
+      - ./init-db.sql:/docker-entrypoint-initdb.d/init-db.sql
     healthcheck:
       test: ["CMD", "mysqladmin", "ping", "-h", "localhost", "-uroot", "-prootpassword"]
-      timeout: 20s
+      interval: 10s
+      timeout: 5s
       retries: 10
+    networks:
+      - powerdns-net
 
   pdns:
-    image: powerdns/pdns-auth-49:latest  # Use a newer version
+    image: powerdns/pdns-auth-49:latest
     container_name: powerdns
     restart: unless-stopped
     command: >
@@ -45,14 +48,14 @@ services:
       - powerdns-net
 
   powerdns-admin:
-    build: ./powerdns-admin   # Pasta onde você terá o Dockerfile com 'pip install pymysql'
+    image: ngoduykhanh/powerdns-admin:latest
     container_name: powerdns-admin
     restart: unless-stopped
     ports:
       - "9191:80"
     environment:
       SQLALCHEMY_DATABASE_URI: mysql+pymysql://pda:pdaadmin@db/powerdns
-      SECRET_KEY: super-secret-key-change-me!
+      SECRET_KEY: super-secret-key-change-me!  # Alterar em produção
       PDNS_API_URL: http://pdns:8081
       PDNS_API_KEY: pdns-api-key
       GUNICORN_WORKERS: 3
