@@ -1,16 +1,20 @@
 FROM mcr.microsoft.com/dotnet/sdk:8.0 AS base
 
-# Instala Python e git
-RUN apt-get update && apt-get install -y python3 python3-pip git && rm -rf /var/lib/apt/lists/*
+# Instala Python e ferramentas de build
+RUN apt-get update && \
+    apt-get install -y python3 python3-pip git build-essential libffi-dev libssl-dev && \
+    rm -rf /var/lib/apt/lists/*
 
 WORKDIR /app
 
-# Copia arquivos
-COPY app/ ./app/
+# Copia requirements antes do app para aproveitar cache
 COPY requirements.txt ./requirements.txt
 
-# Instala dependências Python
+RUN pip3 install --upgrade pip
 RUN pip3 install --no-cache-dir -r requirements.txt
+
+# Copia o restante da aplicação
+COPY app/ ./app/
 
 WORKDIR /app/app
 
