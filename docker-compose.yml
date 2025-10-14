@@ -20,7 +20,7 @@ services:
 
     environment:
       TZ: 'America/Sao_Paulo'           # fuso horário do Brasil
-      FTLCONF_webserver_api_password: 'senha_segura_aqui'
+      FTLCONF_webserver_api_password: 'cpqw.3725'
       FTLCONF_dns_listeningMode: 'all'  # escuta em todas as interfaces
 
     volumes:
