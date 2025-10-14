@@ -11,4 +11,4 @@ services:
       - ./symbols:/symbols  # Symbols cache (opcional)
       - ./uploads:/uploads  # Local temporário para dumps
     environment:
-      - PYTHONUNBUFFERED=1
+      - PYTHONUNBUFFERED=0
