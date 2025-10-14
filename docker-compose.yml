@@ -45,14 +45,14 @@ services:
       - powerdns-net
 
   powerdns-admin:
-    image: powerdnsadmin/pda-legacy:latest
+    build: ./powerdns-admin   # Pasta onde você terá o Dockerfile com 'pip install pymysql'
     container_name: powerdns-admin
     restart: unless-stopped
     ports:
       - "9191:80"
     environment:
       SQLALCHEMY_DATABASE_URI: mysql+pymysql://pda:pdaadmin@db/powerdns
-      SECRET_KEY: super-secret-key-change-me!  # Change in production!
+      SECRET_KEY: super-secret-key-change-me!
       PDNS_API_URL: http://pdns:8081
       PDNS_API_KEY: pdns-api-key
       GUNICORN_WORKERS: 3
