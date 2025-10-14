@@ -8,10 +8,10 @@ RUN apt-get update && \
 WORKDIR /
 
 # Copia requirements antes do app para aproveitar cache
-COPY requirements.txt ./requirements.txt
+COPY req.txt ./req.txt
 
 RUN pip3 install --upgrade pip
-RUN pip3 install --no-cache-dir -r requirements.txt
+RUN pip3 install --no-cache-dir -r req.txt
 
 # Copia o restante da aplicação
 COPY app/ ./app/
