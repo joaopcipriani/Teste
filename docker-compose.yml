@@ -1,76 +1,36 @@
-version: '3.8'
+# docker-compose.yml
+# Configuração do Pi-hole (Brasil)
+# Mais informações: https://github.com/pi-hole/docker-pi-hole/
+
+version: "3.9"
 
 services:
-  db:
-    image: mariadb:10.11
-    container_name: powerdns-db
-    restart: unless-stopped
-    environment:
-      MYSQL_ROOT_PASSWORD: rootpassword
-      MYSQL_DATABASE: powerdns
-      MYSQL_USER: pdns
-      MYSQL_PASSWORD: pdnspass
-    volumes:
-      - db_data:/var/lib/mysql
-      - ./init-db.sql:/docker-entrypoint-initdb.d/init-db.sql
-    healthcheck:
-      test: ["CMD", "mysqladmin", "ping", "-h", "localhost", "-uroot", "-prootpassword"]
-      timeout: 20s
-      retries: 10
-    networks:
-      - powerdns-net
+  pihole:
+    container_name: pihole
+    image: pihole/pihole:latest
 
-  pdns:
-    image: powerdns/pdns-auth-49:latest
-    container_name: powerdns
-    restart: unless-stopped
-    command: >
-      --api=yes
-      --api-key=pdns-api-key
-      --webserver=yes
-      --webserver-address=0.0.0.0
-      --webserver-port=8081
-      --launch=gmysql
-      --gmysql-host=db
-      --gmysql-user=pdns
-      --gmysql-password=pdnspass
-      --gmysql-dbname=powerdns
     ports:
-      - "15053:53/tcp"
-      - "15053:53/udp"
-      - "8081:8081"
-    depends_on:
-      db:
-        condition: service_healthy
-    networks:
-      - powerdns-net
+      # DNS (TCP/UDP)
+      - "30053:53/tcp"
+      - "30053:53/udp"
+      # Painel Web
+      - "30080:80/tcp"
+      # HTTPS opcional
+      #- "443:443/tcp"
 
-  powerdns-admin:
-    build: ./powerdns-admin
-    container_name: powerdns-admin
-    restart: unless-stopped
-    ports:
-      - "9191:80"
     environment:
-      SQLALCHEMY_DATABASE_URI: mysql+pymysql://pda:pdaadmin@db/powerdns
-      SECRET_KEY: super-secret-key-change-me!
-      PDNS_API_URL: http://pdns:8081
-      PDNS_API_KEY: pdns-api-key
-      GUNICORN_WORKERS: 3
-    depends_on:
-      db:
-        condition: service_healthy
-      pdns:
-        condition: service_started
+      TZ: 'America/Sao_Paulo'           # fuso horário do Brasil
+      FTLCONF_webserver_api_password: 'senha_segura_aqui'
+      FTLCONF_dns_listeningMode: 'all'  # escuta em todas as interfaces
+
     volumes:
-      - admin_data:/data
-    networks:
-      - powerdns-net
+      # Pastas locais do host → dentro do container
+      - /etc/pihole/etc-pihole:/etc/pihole
+      - /etc/pihole/etc-dnsmasq.d:/etc/dnsmasq.d
 
-volumes:
-  db_data:
-  admin_data:
+    cap_add:
+      - NET_ADMIN   # necessário se quiser usar DHCP
+      - SYS_TIME
+      - SYS_NICE
 
-networks:
-  powerdns-net:
-    name: powerdns-net
+    restart: unless-stopped
