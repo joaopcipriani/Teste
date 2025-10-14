@@ -6,31 +6,42 @@ services:
     container_name: powerdns-db
     restart: unless-stopped
     environment:
-      MYSQL_ROOT_PASSWORD: rootpassword  # Mude isso!
+      MYSQL_ROOT_PASSWORD: rootpassword  # Change in production!
       MYSQL_DATABASE: powerdns
       MYSQL_USER: pdns
-      MYSQL_PASSWORD: pdnspass  # Mude isso!
+      MYSQL_PASSWORD: pdnspass  # Change in production!
     volumes:
       - db_data:/var/lib/mysql
+      - ./init-db.sql:/docker-entrypoint-initdb.d/init-db.sql  # Updated init script
     healthcheck:
-      test: ["CMD", "mysqladmin", "ping", "-h", "localhost"]
+      test: ["CMD", "mysqladmin", "ping", "-h", "localhost", "-uroot", "-prootpassword"]
       timeout: 20s
       retries: 10
 
   pdns:
-    image: powerdns/pdns-auth-45  # Versão recente do PowerDNS Authoritative
+    image: powerdns/pdns-auth-49:latest  # Use a newer version
     container_name: powerdns
     restart: unless-stopped
-    command: /pdns/pdns_server --allow-dnsupdate-from=0.0.0.0/0 --api=yes --api-key=pdns-api-key --webserver=yes --webserver-address=0.0.0.0 --webserver-port=8081 --launch=gmysql --gmysql-host=db --gmysql-user=pdns --gmysql-password=pdnspass --gmysql-dbname=powerdns
+    command:
+      - "--api=yes"
+      - "--api-key=pdns-api-key"
+      - "--webserver=yes"
+      - "--webserver-address=0.0.0.0"
+      - "--webserver-port=8081"
+      - "--launch=gmysql"
+      - "--gmysql-host=db"
+      - "--gmysql-user=pdns"
+      - "--gmysql-password=pdnspass"
+      - "--gmysql-dbname=powerdns"
     ports:
-      - "9153:53/tcp"
-      - "9153:53/udp"
-      - "8081:8081"  # API interna
+      - "15053:53/tcp"
+      - "15053:53/udp"
+      - "8081:8081"
     depends_on:
       db:
         condition: service_healthy
-    volumes:
-      - ./pdns-init.sql:/docker-entrypoint-initdb.d/pdns-init.sql  # Script de init (crie o arquivo abaixo)
+    networks:
+      - powerdns-net
 
   powerdns-admin:
     image: powerdnsadmin/pda-legacy:latest
@@ -39,22 +50,25 @@ services:
     ports:
       - "9191:80"
     environment:
-      SQLALCHEMY_DATABASE_URI: mysql://pda:pdaadmin@db/powerdns  # Usa o mesmo DB, mas tabela separada
-      SECRET_KEY: super-secret-key-change-me!  # Mude isso!
+      SQLALCHEMY_DATABASE_URI: mysql://pda:pdaadmin@db/powerdns
+      SECRET_KEY: super-secret-key-change-me!  # Change in production!
       PDNS_API_URL: http://pdns:8081
       PDNS_API_KEY: pdns-api-key
-      PDNS_VERSION: 4.5.0
       GUNICORN_WORKERS: 3
     depends_on:
       db:
         condition: service_healthy
+      pdns:
+        condition: service_started
     volumes:
-      - admin_data:/data  # Para persistir config do Admin
+      - admin_data:/data
+    networks:
+      - powerdns-net
 
 volumes:
   db_data:
   admin_data:
 
 networks:
-  default:
+  powerdns-net:
     name: powerdns-net

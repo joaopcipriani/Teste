@@ -1,3 +1,4 @@
+-- Create PowerDNS schema
 CREATE TABLE IF NOT EXISTS domains (
   id                    INT AUTO_INCREMENT,
   name                  VARCHAR(255) NOT NULL,
@@ -24,7 +25,7 @@ CREATE TABLE IF NOT EXISTS records (
   PRIMARY KEY (id)
 ) Engine=InnoDB CHARACTER SET=utf8 COLLATE=utf8_unicode_ci;
 
-CREATE UNIQUE INDEX rec_name_type on records (domain_id, name, type, content, disabled);
+CREATE UNIQUE INDEX rec_name_type ON records (domain_id, name, type, content, disabled);
 
 CREATE TABLE IF NOT EXISTS supermasters (
   ip                    VARCHAR(25) NOT NULL,
@@ -32,6 +33,12 @@ CREATE TABLE IF NOT EXISTS supermasters (
   account               VARCHAR(40)
 ) Engine=InnoDB CHARACTER SET=utf8 COLLATE=utf8_unicode_ci;
 
-INSERT INTO domains (name,type) VALUES ('example.com','NATIVE');
-INSERT INTO records (domain_id,name,type,content,ttl,prio) VALUES (1,'example.com','SOA','ns1.example.com hostmaster.example.com 1 10800 3600 604800 3600',3600,0);
-INSERT INTO records (domain_id,name,type,content,ttl,prio) VALUES (1,'example.com','NS','ns1.example.com',3600,0);
+-- Insert example domain
+INSERT INTO domains (name, type) VALUES ('example.com', 'NATIVE');
+INSERT INTO records (domain_id, name, type, content, ttl, prio) VALUES (1, 'example.com', 'SOA', 'ns1.example.com hostmaster.example.com 1 10800 3600 604800 3600', 3600, 0);
+INSERT INTO records (domain_id, name, type, content, ttl, prio) VALUES (1, 'example.com', 'NS', 'ns1.example.com', 3600, 0);
+
+-- Create PowerDNS Admin user
+CREATE USER IF NOT EXISTS 'pda'@'%' IDENTIFIED BY 'pdaadmin';
+GRANT ALL PRIVILEGES ON powerdns.* TO 'pda'@'%';
+FLUSH PRIVILEGES;
