@@ -46,7 +46,7 @@ services:
       - powerdns-net
 
   powerdns-admin:
-    image: ngoduykhanh/powerdns-admin:latest
+    build: ./powerdns-admin
     container_name: powerdns-admin
     restart: unless-stopped
     ports:
