@@ -10,7 +10,7 @@ WORKDIR /
 # Copia requirements antes do app para aproveitar cache
 COPY req.txt ./req.txt
 
-RUN pip3 install --upgrade pip
+RUN pip3 install 
 RUN pip3 install --no-cache-dir -r req.txt
 
 # Copia o restante da aplicação
