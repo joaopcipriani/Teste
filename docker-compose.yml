@@ -1,36 +1,58 @@
-# docker-compose.yml
-# Configuração do Pi-hole (Brasil)
-# Mais informações: https://github.com/pi-hole/docker-pi-hole/
-
-version: "3.9"
+version: "3"
 
 services:
-  pihole:
-    container_name: pihole
-    image: pihole/pihole:latest
-
-    ports:
-      # DNS (TCP/UDP)
-      - "30053:53/tcp"
-      - "30053:53/udp"
-      # Painel Web
-      - "30080:80/tcp"
-      # HTTPS opcional
-      #- "443:443/tcp"
-
-    environment:
-      TZ: 'America/Sao_Paulo'           # fuso horário do Brasil
-      FTLCONF_webserver_api_password: 'cpqw.3725'
-      FTLCONF_dns_listeningMode: 'all'  # escuta em todas as interfaces
-
-    volumes:
-      # Pastas locais do host → dentro do container
-      - /etc/pihole/etc-pihole:/etc/pihole
-      - /etc/pihole/etc-dnsmasq.d:/etc/dnsmasq.d
-
-    cap_add:
-      - NET_ADMIN   # necessário se quiser usar DHCP
-      - SYS_TIME
-      - SYS_NICE
-
+  backend:
+    container_name: infisical-backend
     restart: unless-stopped
+    depends_on:
+      db:
+        condition: service_healthy
+      redis:
+        condition: service_started
+    image: infisical/infisical:latest-postgres
+    pull_policy: always
+    env_file: .env
+    ports:
+      - 30000:8080
+    environment:
+      - NODE_ENV=production
+    networks:
+      - infisical
+
+  redis:
+    image: redis
+    container_name: infisical-dev-redis
+    env_file: .env
+    restart: always
+    environment:
+      - ALLOW_EMPTY_PASSWORD=yes
+    ports:
+      - 6379:6379
+    networks:
+      - infisical
+    volumes:
+      - redis_data:/data
+
+  db:
+    container_name: infisical-db
+    image: postgres:14-alpine
+    restart: always
+    env_file: .env
+    volumes:
+      - pg_data:/var/lib/postgresql/data
+    networks:
+      - infisical
+    healthcheck:
+      test: "pg_isready --username=${POSTGRES_USER} && psql --username=${POSTGRES_USER} --list"
+      interval: 5s
+      timeout: 10s
+      retries: 10
+
+volumes:
+  pg_data:
+    driver: local
+  redis_data:
+    driver: local
+
+networks:
+  infisical:
