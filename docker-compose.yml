@@ -1,58 +1,52 @@
-version: "3"
-
 services:
-  backend:
-    container_name: infisical-backend
-    restart: unless-stopped
-    depends_on:
-      db:
-        condition: service_healthy
-      redis:
-        condition: service_started
-    image: infisical/infisical:latest-postgres
-    pull_policy: always
+  app:
+    image: fireflyiii/core:latest
+    hostname: app
+    container_name: firefly_iii_core
+    restart: always
+    volumes:
+      - firefly_iii_upload:/var/www/html/storage/upload
     env_file: .env
+    networks:
+      - firefly_iii
     ports:
       - 30000:8080
-    environment:
-      - NODE_ENV=production
-    networks:
-      - infisical
-
-  redis:
-    image: redis
-    container_name: infisical-dev-redis
-    env_file: .env
-    restart: always
-    environment:
-      - ALLOW_EMPTY_PASSWORD=yes
-    ports:
-      - 6379:6379
-    networks:
-      - infisical
-    volumes:
-      - redis_data:/data
-
+    depends_on:
+      - db
   db:
-    container_name: infisical-db
-    image: postgres:14-alpine
+    image: mariadb:lts
+    hostname: db
+    container_name: firefly_iii_db
     restart: always
-    env_file: .env
-    volumes:
-      - pg_data:/var/lib/postgresql/data
+    env_file: .db.env
     networks:
-      - infisical
-    healthcheck:
-      test: "pg_isready --username=${POSTGRES_USER} && psql --username=${POSTGRES_USER} --list"
-      interval: 5s
-      timeout: 10s
-      retries: 10
+      - firefly_iii
+    volumes:
+      - firefly_iii_db:/var/lib/mysql
+  cron:
+    #
+    # To make this work, set STATIC_CRON_TOKEN in your .env file or as an environment variable
+    # The STATIC_CRON_TOKEN must be *exactly* 32 characters long
+    #
+    image: alpine
+    restart: always
+    container_name: firefly_iii_cron
+    env_file: .env
+    command: sh -c "
+      apk add tzdata && \
+      (ln -s /usr/share/zoneinfo/$$TZ /etc/localtime || true) && \
+      echo \"0 3 * * * wget -qO- http://app:8080/api/v1/cron/$$STATIC_CRON_TOKEN;echo\"
+      | crontab - && \
+      crond -f -L /dev/stdout"
+    networks:
+      - firefly_iii
+    depends_on:
+      - app
 
 volumes:
-  pg_data:
-    driver: local
-  redis_data:
-    driver: local
+   firefly_iii_upload:
+   firefly_iii_db:
 
 networks:
-  infisical:
+  firefly_iii:
+    driver: bridge
