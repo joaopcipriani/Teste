@@ -1,0 +1,17 @@
+version: '3.7'
+
+x-default-back-environment: &default-back-environment
+  # (Mesmo conteúdo do x-default-back-environment do docker-compose.yml)
+
+services:
+  taiga-manage:
+    image: taigaio/taiga-back:latest
+    command: manage.py migrate --noinput
+    environment: [*default-back-environment]
+    volumes:
+      - static:/taiga-back/static
+      - media:/taiga-back/media
+    depends_on:
+      - postgres
+      - rabbitmq
+      - redis
