@@ -1,13 +1,34 @@
 version: '3.7'
 
-x-default-back-environment: &default-back-environment
-  # (Mesmo conteúdo do x-default-back-environment do docker-compose.yml)
-
 services:
   taiga-manage:
     image: taigaio/taiga-back:latest
     command: manage.py migrate --noinput
-    environment: [*default-back-environment]
+    environment:
+      - POSTGRES_USER=${POSTGRES_USER}
+      - POSTGRES_PASSWORD=${POSTGRES_PASSWORD}
+      - POSTGRES_HOST=postgres
+      - POSTGRES_PORT=5432
+      - POSTGRES_NAME=${POSTGRES_DB:-taiga}
+      - RABBITMQ_USER=${RABBITMQ_USER}
+      - RABBITMQ_PASS=${RABBITMQ_PASS}
+      - RABBITMQ_VHOST=${RABBITMQ_VHOST}
+      - RABBITMQ_HOST=rabbitmq
+      - RABBITMQ_PORT=5672
+      - RABBITMQ_ERLANG_COOKIE=${RABBITMQ_ERLANG_COOKIE}
+      - EMAIL_BACKEND=${EMAIL_BACKEND}
+      - EMAIL_HOST=${EMAIL_HOST}
+      - EMAIL_PORT=${EMAIL_PORT}
+      - EMAIL_HOST_USER=${EMAIL_HOST_USER}
+      - EMAIL_HOST_PASSWORD=${EMAIL_HOST_PASSWORD}
+      - EMAIL_USE_TLS=${EMAIL_USE_TLS}
+      - EMAIL_USE_SSL=${EMAIL_USE_SSL}
+      - EMAIL_DEFAULT_FROM=${EMAIL_DEFAULT_FROM}
+      - SECRET_KEY=${SECRET_KEY}
+      - TAIGA_SITES_SCHEME=${TAIGA_SCHEME}
+      - TAIGA_SITES_DOMAIN=${TAIGA_DOMAIN}
+      - FORCE_SCRIPT_NAME=${SUBPATH}
+      - ENABLE_TELEMETRY=${ENABLE_TELEMETRY}
     volumes:
       - static:/taiga-back/static
       - media:/taiga-back/media
