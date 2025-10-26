@@ -5,7 +5,7 @@ services:
     image: postgres:13-alpine
     environment:
       - POSTGRES_USER=taiga
-      - POSTGRES_PASSWORD=taiga_pass_segura
+      - POSTGRES_PASSWORD=
       - POSTGRES_DB=taiga
     volumes:
       - postgres_data:/var/lib/postgresql/data
@@ -19,7 +19,7 @@ services:
       - POSTGRES_HOST=postgres
       - POSTGRES_PORT=5432
       - POSTGRES_NAME=taiga
-      - SECRET_KEY=taiga-secret-key-aqui
+      - SECRET_KEY=3kJ9xZ7vN2pL8mW5qT4rY6uA1bF0cG2hD5iE7jK9lM3nP8oQ
       - TAIGA_SITES_SCHEME=http
       - TAIGA_SITES_DOMAIN=localhost:9000
       - EMAIL_BACKEND=console
