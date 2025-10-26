@@ -1,36 +1,74 @@
-# docker-compose.yml
-# Configuração do Pi-hole (Brasil)
-# Mais informações: https://github.com/pi-hole/docker-pi-hole/
-
-version: "3.9"
+version: '3.8'
 
 services:
-  pihole:
-    container_name: pihole
-    image: pihole/pihole:latest
-
-    ports:
-      # DNS (TCP/UDP)
-      - "30053:53/tcp"
-      - "30053:53/udp"
-      # Painel Web
-      - "30080:80/tcp"
-      # HTTPS opcional
-      #- "443:443/tcp"
-
+  zookeeper:
+    image: confluentinc/cp-zookeeper:7.6.1
+    container_name: zookeeper
     environment:
-      TZ: 'America/Sao_Paulo'           # fuso horário do Brasil
-      FTLCONF_webserver_api_password: 'cpqw.3725'
-      FTLCONF_dns_listeningMode: 'all'  # escuta em todas as interfaces
+      ZOOKEEPER_CLIENT_PORT: 2181
+      ZOOKEEPER_TICK_TIME: 2000
+    ports:
+      - "2181:2181"
 
+  kafka:
+    image: confluentinc/cp-kafka:7.6.1
+    container_name: kafka
+    depends_on:
+      - zookeeper
+    ports:
+      - "30000:9092"
+    environment:
+      KAFKA_BROKER_ID: 1
+      KAFKA_ZOOKEEPER_CONNECT: zookeeper:2181
+      KAFKA_ADVERTISED_LISTENERS: PLAINTEXT://localhost:30000
+      KAFKA_OFFSETS_TOPIC_REPLICATION_FACTOR: 1
+      KAFKA_LISTENERS: PLAINTEXT://0.0.0.0:9092
+      KAFKA_AUTO_CREATE_TOPICS_ENABLE: 'true'
+
+  producer:
+    image: python:3.12-slim
+    container_name: producer
+    depends_on:
+      - kafka
     volumes:
-      # Pastas locais do host → dentro do container
-      - /etc/pihole/etc-pihole:/etc/pihole
-      - /etc/pihole/etc-dnsmasq.d:/etc/dnsmasq.d
+      - ./producer.py:/app/producer.py
+    working_dir: /app
+    command: python producer.py
+    environment:
+      PYTHONUNBUFFERED: 1
 
-    cap_add:
-      - NET_ADMIN   # necessário se quiser usar DHCP
-      - SYS_TIME
-      - SYS_NICE
+  consumer_email:
+    image: python:3.12-slim
+    container_name: consumer_email
+    depends_on:
+      - kafka
+    volumes:
+      - ./consumer_email.py:/app/consumer_email.py
+    working_dir: /app
+    command: python consumer_email.py
+    environment:
+      PYTHONUNBUFFERED: 1
 
-    restart: unless-stopped
+  consumer_stock:
+    image: python:3.12-slim
+    container_name: consumer_stock
+    depends_on:
+      - kafka
+    volumes:
+      - ./consumer_stock.py:/app/consumer_stock.py
+    working_dir: /app
+    command: python consumer_stock.py
+    environment:
+      PYTHONUNBUFFERED: 1
+
+  consumer_analytics:
+    image: python:3.12-slim
+    container_name: consumer_analytics
+    depends_on:
+      - kafka
+    volumes:
+      - ./consumer_analytics.py:/app/consumer_analytics.py
+    working_dir: /app
+    command: python consumer_analytics.py
+    environment:
+      PYTHONUNBUFFERED: 1
