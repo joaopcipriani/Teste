@@ -1,48 +1,37 @@
-version: '3.7'
+version: "3.9"
 
 services:
-  postgres:
-    image: postgres:13-alpine
-    environment:
-      - POSTGRES_USER=taiga
-      - POSTGRES_PASSWORD=
-      - POSTGRES_DB=taiga
-    volumes:
-      - postgres_data:/var/lib/postgresql/data
-    restart: unless-stopped
 
-  taiga-back:
-    image: taigaio/taiga-back:latest
-    environment:
-      - POSTGRES_USER=taiga
-      - POSTGRES_PASSWORD=taiga_pass_segura
-      - POSTGRES_HOST=postgres
-      - POSTGRES_PORT=5432
-      - POSTGRES_NAME=taiga
-      - SECRET_KEY=3kJ9xZ7vN2pL8mW5qT4rY6uA1bF0cG2hD5iE7jK9lM3nP8oQ
-      - TAIGA_SITES_SCHEME=http
-      - TAIGA_SITES_DOMAIN=localhost:9000
-      - EMAIL_BACKEND=console
-    volumes:
-      - static:/taiga-back/static
-      - media:/taiga-back/media
+  exporter:
+    build: ./exporter
+    container_name: pritunl_exporter
+    restart: unless-stopped
+    env_file: .env
     depends_on:
-      - postgres
-    restart: unless-stopped
+      - mongo
+      - influxdb
 
-  taiga-front:
-    image: taigaio/taiga-front:latest
+  mongo:
+    image: mongo:6
+    restart: unless-stopped
+    volumes:
+      - mongo_data:/data/db
+
+  influxdb:
+    image: influxdb:2.7
+    restart: unless-stopped
+    volumes:
+      - influx_data:/var/lib/influxdb
+
+  grafana:
+    image: grafana/grafana:10.0.0
+    restart: unless-stopped
     environment:
-      - TAIGA_URL=http://localhost:9000
-      - TAIGA_API=http://localhost:9000/api/v1/
-      - PUBLIC_REGISTER_ENABLED=false
+      - GF_SECURITY_ADMIN_USER=admin
+      - GF_SECURITY_ADMIN_PASSWORD=admin
     ports:
-      - "9000:80"
-    depends_on:
-      - taiga-back
-    restart: unless-stopped
+      - "3000:3000"
 
 volumes:
-  postgres_data:
-  media:
-  static:
+  mongo_data:
+  influx_data:
